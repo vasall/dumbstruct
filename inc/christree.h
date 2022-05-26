@@ -1,30 +1,29 @@
-#ifndef _PNC_CATREE_H
-#define _PNC_CATREE_H
+#ifndef _DBS_CHRISTREE_H
+#define _DBS_CHRISTREE_H
 
 #include "define.h"
-#include "connection.h"
 
 /*
  * 
  */
-#define PNC_CATREE_LIM       32
-#define PNC_CATREE_NEXT_MIN  5
+#define DBS_CHRISTREE_NEXT_MIN  5
 
 
-struct pnc_catree_node {
+
+struct dbs_christree_node {
 	/*
 	 * A pointer to both the node above and the nodes below. 
 	 */
-	struct pnc_catree_node       *prev;
-	struct pnc_catree_node       **next;
+	struct dbs_christree_node       *prev;
+	struct dbs_christree_node       **next;
 	int                          next_used;
 	int                          next_alloc;
 	
 	/*
 	 * The cross pointers for the layer.
 	 */
-	struct pnc_catree_node       *before;
-	struct pnc_catree_node       *after;
+	struct dbs_christree_node       *before;
+	struct dbs_christree_node       *after;
 
 	/*
 	 * The layernumber the node is on. 
@@ -32,96 +31,108 @@ struct pnc_catree_node {
 	int                          layer;
 
 	/*
-	 * A data character to differentiate the branch.
+	 * The differenciating byte.
 	 */
-	char                         data;
+	char                         dif;
 
 	/*
-	 * Pointer to the connection. 
+	 * The data pointer.
 	 */
-	struct pnc_con               *con;
+	void                         *data;
 };
 
 
-struct pnc_catree_layer {
-	struct pnc_catree_node       *node;
+struct dbs_christree_layer {
+	struct dbs_christree_node       *node;
 	int                          node_num;
 };
 
 
-struct pnc_catree {
+struct dbs_christree {
 	/*
 	 * The root nodes for each branch of the connection address tree. 
 	 */
-	struct pnc_catree_rnode      *root;
+	struct dbs_christree_node      *root;
 
 	/*
 	 * Each layer is a cross linked like a linked list. 
 	 */
-	struct pnc_catree_node       *layers;
-	int                          layers_num;
+	struct dbs_christree_layer       *layer;
+	int                          layer_num;
 };
 
 
-
-/*
- * 
- */
-PNC_API struct pnc_catree *pnc_catree_init(void);
-
-
-/*
- * 
- */
-PNC_API void pnc_catree_close(struct pnc_catree *tree);
+struct dbs_chrismask {
+	int off;
+	int len;
+	unsigned char *data;
+};
 
 
 /*
  * 
  */
-PNC_API struct pnc_catree_node *pnc_catree_get_next(struct pnc_catree_node *n,
-		char data);
+DBS_API struct dbs_christree *dbs_christree_init(int lim);
 
 
 /*
  * 
  */
-PNC_API struct pnc_catree_node *pnc_catree_get_layer(struct pnc_catree *tree,
-		int layer, char data);
+DBS_API void dbs_christree_close(struct dbs_christree *tree);
 
 
 /*
  * 
  */
-PNC_API struct pnc_catree_node *pnc_catree_new(struct pnc_catree_node *prev,
-		int layer, char data, struct pnc_con *con);
+DBS_API struct dbs_christree_node *dbs_christree_get_next(struct dbs_christree_node *n,
+		char dif);
 
 
 /*
  * 
  */
-PNC_API int pnc_catree_add_next(struct pnc_catree_node *node,
-		struct pnc_catree_node *next);
-
-/*
- * 
- */
-PNC_API void pnc_catree_rmv_next(struct pnc_catree_node *node,
-		struct pnc_catree_node *next);
+DBS_API struct dbs_christree_node *dbs_christree_get_layer(struct dbs_christree *tree,
+		int layer, char dif);
 
 
 /*
  * 
  */
-PNC_API int pnc_catree_link_layer(struct pnc_catree *tree,
-		struct pnc_node *node);
+DBS_API struct dbs_christree_node *dbs_christree_new(struct dbs_christree_node *prev,
+		int layer, char dif);
+
+
+/*
+ * 
+ */
+DBS_API void dbs_christree_del(struct dbs_christree_node *node);
+
+
+/*
+ * 
+ */
+DBS_API int dbs_christree_add_next(struct dbs_christree_node *node,
+		struct dbs_christree_node *next);
+
+/*
+ * 
+ */
+DBS_API void dbs_christree_rmv_next(struct dbs_christree_node *node,
+		struct dbs_christree_node *next);
+
+
+/*
+ * 
+ */
+DBS_API int dbs_christree_link_layer(struct dbs_christree *tree,
+		struct dbs_christree_node *node);
 
 
 /*
  *  
  */
-PNC_API void pnc_catree_unlink_layer(struct pnc_catree *tree,
-		struct pnc_node *node);
+DBS_API void dbs_christree_unlink_layer(struct dbs_christree *tree,
+		struct dbs_christree_node *node);
 
 
 /*
@@ -137,46 +148,46 @@ PNC_API void pnc_catree_unlink_layer(struct pnc_catree *tree,
  *
  * Returns: 0 on success or -1 if an error occurred
  */
-PNC_API int pnc_catree_link_node(struct pnc_catree *tree,
-		struct pnc_catree_node *node);
+DBS_API int dbs_christree_link_node(struct dbs_christree *tree,
+		struct dbs_christree_node *node);
 
 
 /*
  * 
  */
-PNC_API void pnc_catree_unlink_node(struct pnc_catree *tree, 
-		struct pnc_catree_node *node);
+DBS_API void dbs_christree_unlink_node(struct dbs_christree *tree, 
+		struct dbs_christree_node *node);
 
 
 /*
  * 
  */
-PNC_API int pnc_catree_add(struct pnc_catree *tree,
-		struct pnc_uniaddr *addr, struct pnc_con *con);
+DBS_API int dbs_christree_add(struct dbs_christree *tree,
+		unsigned char *str, void *data);
 
 
 /*
  * 
  */
-PNC_API void pnc_catree_rmv(struct pnc_catree *tree,
-		struct pnc_uniaddr *addr);
+DBS_API void dbs_christree_rmv(struct dbs_christree *tree,
+		unsigned char *str);
 
 
-struct pnc_catree_sel_pass {
+struct dbs_christree_sel_pass {
 	int c;
 	int lim;
-	struct pnc_con **con;
+	void **data;
 };
 
 
-PNC_API void pnc_catree_sel_hlf(struct pnc_catree_node *nc, void *d);
+DBS_API void dbs_christree_sel_hlf(struct dbs_christree_node *nc, void *d);
 
 
 /*
  * 
  */
-PNC_API int pnc_catree_sel(struct pnc_catree *tree,
-		struct pnc_unimask *mask, struct pnc_con **con, int lim);
+DBS_API int dbs_christree_sel(struct dbs_christree *tree,
+		struct dbs_chrismask *mask, void **data, int lim);
 
 
-#endif /* _PNC_CATREE_H */
+#endif /* _DBS_CHRISTREE_H */

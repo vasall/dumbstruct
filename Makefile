@@ -10,7 +10,7 @@
 # ------------------------------------------------
 
 # Name of the created executable
-TARGET     := pnclib.a
+TARGET     := libdbs.a
 
 # Get the absolute path to the directory this makefile is in
 MKFILE_PTH := $(abspath $(lastword $(MAKEFILE_LIST)))
@@ -21,7 +21,7 @@ CC         := gcc
 # Error flags for compiling
 WARNFLAGS   := -Wall -Wextra -Wmissing-prototypes -Wstrict-prototypes -Wold-style-definition
 # Compiling flags here
-CFLAGS     := -g -O0 -ansi -std=c89 -I. -I./inc/ -pedantic -D_POSIX_C_SOURCE=200809L -lm
+CFLAGS     := -g -O0 -ansi -std=c89 -I. -I./inc/ -pedantic -D_POSIX_C_SOURCE=200809L
 
 # The linker to use
 LINKER     := gcc
@@ -42,3 +42,4 @@ $(TARGET): $(OBJECTS)
 $(OBJECTS): $(OBJDIR)/%.o : $(SRCDIR)/%.c
 	@$(CC) $(CFLAGS) $(WARNFLAGS) -c $< -o $@
 	@echo "Compiled "$<" successfully!"
+
