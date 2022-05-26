@@ -213,7 +213,7 @@ DBS_API int dbs_christree_add_next(struct dbs_christree_node *node,
 	 * more.
 	 */
 	if(node->next_used + 1 >= node->next_alloc) {
-		alloc = node->next_alloc * 1.5;
+		alloc = node->next_alloc * 2;
 		tmp = alloc * sizeof(struct dbs_christree_node *);
 		if(!(p = realloc(node->next, tmp)))
 			goto err_return;
@@ -225,13 +225,13 @@ DBS_API int dbs_christree_add_next(struct dbs_christree_node *node,
 		node->next_alloc = alloc;
 	}
 
-
 	for(i = 0; i < node->next_alloc; i++) {
 		/*
 		 * If there's a free slot, use it.
 		 */
 		if(node->next[i] == NULL) {
 			node->next[i] = next;
+			node->next_used++;
 			return 0;
 		}
 
@@ -242,10 +242,11 @@ DBS_API int dbs_christree_add_next(struct dbs_christree_node *node,
 		 */
 		if(node->next[i]->dif > next->dif) {
 			tmp = (node->next_used - i);
-			tmp += sizeof(struct dbs_christree_node *);
+			tmp *= sizeof(struct dbs_christree_node *);
 			memmove(node->next + i + 1, node->next + i, tmp);
 
 			node->next[i] = next;
+			node->next_used++;
 			return 0;
 		}
 	}
@@ -296,7 +297,6 @@ DBS_API int dbs_christree_link_layer(struct dbs_christree *tree,
 		ALARM(ALARM_WARN, "tree or node undefined");
 		return -1;
 	}
-
 
 	layer = &tree->layer[node->layer];
 
@@ -456,14 +456,13 @@ DBS_API int dbs_christree_add(struct dbs_christree *tree,
 		return -1;
 	}
 
-
 	n_ptr = tree->root; 
 	for(i = 0; i < tree->layer_num; i++) {
 		if(!(node = dbs_christree_get_next(n_ptr, str[i]))) {
 			if(!(node = dbs_christree_new(n_ptr, i, str[i]))) {
 				goto err_return;
 			}
-			
+
 			if(dbs_christree_link_node(tree, node) < 0)
 				goto err_del_node;
 		}
