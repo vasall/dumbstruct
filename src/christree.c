@@ -376,7 +376,9 @@ DBS_API void dbs_christree_unlink_layer(struct dbs_christree *tree,
 			/*
 			 * Relink nodes.
 			 */
-			n_ptr->after->before = n_ptr->before;
+			if(n_ptr->after) {
+				n_ptr->after->before = n_ptr->before;
+			}
 
 			if(n_ptr->before == NULL) {
 				layer->node = n_ptr->after;
@@ -391,6 +393,8 @@ DBS_API void dbs_christree_unlink_layer(struct dbs_christree *tree,
 			layer->node_num--;
 			return;
 		}
+
+		n_ptr = n_ptr->after;
 	}
 }
 
