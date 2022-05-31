@@ -132,13 +132,15 @@ DBS_API struct dbs_christree_node *dbs_christree_new(struct dbs_christree_node *
 	 */
 	tmp = node->next_alloc * sizeof(struct dbs_christree_node *);
 	if(!(node->next = malloc(tmp)))
-		goto err_return;
+		goto err_free_node;
 
 	for(i = 0; i < node->next_alloc; i++)
 		node->next[i] = NULL;
 
 	return node;
 
+err_free_node:
+	free(node);
 err_return:
 	ALARM(ALARM_ERR, "Failed to create stress tree node");
 	return NULL;
