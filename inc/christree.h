@@ -190,4 +190,11 @@ DBS_API int dbs_christree_sel(struct dbs_christree *tree,
 		struct dbs_chrismask *mask, void **data, int lim);
 
 
+DBS_API int dbs_christree_dump_rec(struct dbs_christree_node *n);
+
+/*
+ * 
+ */
+DBS_API int dbs_christree_dump(struct dbs_christree *tree);
+
 #endif /* _DBS_CHRISTREE_H */
