@@ -565,16 +565,22 @@ DBS_API int dbs_christree_sel(struct dbs_christree *tree,
 		return -1;
 	}
 
+	printf("Sel A -- off: %d, data: %02x\n", mask->off, mask->data[0]);
+
 	/*
 	 * Go through the mask to find the branches to collect the nodes from.
 	 */
 	if(!(n_ptr = dbs_christree_get_layer(tree, mask->off, mask->data[0])))
 		return 0;
 
+	printf("Sel B\n");
+
 	for(i = 1; i < mask->len; i++) {
 		if(!(n_ptr = dbs_christree_get_next(n_ptr, mask->data[i])))
 			return 0;
 	}
+
+	printf("Sel C\n");
 
 	/*
 	 * Recursivly collect all datanection from branches below this node.
