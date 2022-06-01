@@ -520,7 +520,7 @@ DBS_API void dbs_christree_rmv(struct dbs_christree *tree,
 	for(i = tree->layer_num; i >= 0; i--) {
 		n_prev = n_ptr->prev;
 
-		if(n_ptr->next_used > 1 || n_ptr->prev == NULL) {
+		if(n_ptr->next_used > 1 || n_prev == NULL) {
 			return;
 		}
 
