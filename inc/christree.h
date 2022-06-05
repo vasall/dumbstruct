@@ -14,16 +14,16 @@ struct dbs_christree_node {
 	/*
 	 * A pointer to both the node above and the nodes below. 
 	 */
-	struct dbs_christree_node       *prev;
-	struct dbs_christree_node       **next;
+	struct dbs_christree_node    *prev;
+	struct dbs_christree_node    **next;
 	int                          next_used;
 	int                          next_alloc;
 	
 	/*
 	 * The cross pointers for the layer.
 	 */
-	struct dbs_christree_node       *before;
-	struct dbs_christree_node       *after;
+	struct dbs_christree_node    *before;
+	struct dbs_christree_node    *after;
 
 	/*
 	 * The layernumber the node is on. 
@@ -43,7 +43,7 @@ struct dbs_christree_node {
 
 
 struct dbs_christree_layer {
-	struct dbs_christree_node       *node;
+	struct dbs_christree_node    *node;
 	int                          node_num;
 };
 

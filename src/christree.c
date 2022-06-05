@@ -171,6 +171,9 @@ DBS_API struct dbs_christree_node *dbs_christree_get_next(struct dbs_christree_n
 	}
 
 	for(i = 0; i < n->next_used; i++) {
+		if(!n->next[i])
+			continue;
+
 		if(n->next[i]->dif == dif)
 			return n->next[i];
 	}
@@ -460,7 +463,6 @@ DBS_API int dbs_christree_add(struct dbs_christree *tree,
 	struct dbs_christree_node *node;
 	struct dbs_christree_node *n_ptr;
 
-
 	if(!tree || !str || !data) {
 		ALARM(ALARM_WARN, "tree or str or data undefined");
 		return -1;
@@ -565,22 +567,16 @@ DBS_API int dbs_christree_sel(struct dbs_christree *tree,
 		return -1;
 	}
 
-	printf("Sel A -- off: %d, data: %02x\n", mask->off, mask->data[0]);
-
 	/*
 	 * Go through the mask to find the branches to collect the nodes from.
 	 */
 	if(!(n_ptr = dbs_christree_get_layer(tree, mask->off, mask->data[0])))
 		return 0;
 
-	printf("Sel B\n");
-
 	for(i = 1; i < mask->len; i++) {
 		if(!(n_ptr = dbs_christree_get_next(n_ptr, mask->data[i])))
 			return 0;
 	}
-
-	printf("Sel C\n");
 
 	/*
 	 * Recursivly collect all datanection from branches below this node.
@@ -604,7 +600,9 @@ DBS_API int dbs_christree_dump_rec(struct dbs_christree_node *n)
 		printf("  ");
 	}
 
-	printf("- %d: %c (%02x)\n", l, n->dif, (unsigned int)n->dif);
+	printf("- %d (%d): \n", l, n->next_used);
+	printf("%02x\n", n->dif);
+
 
 	for(i = 0; i < n->next_used; i++) {
 		dbs_christree_dump_rec(n->next[i]);	
