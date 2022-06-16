@@ -146,6 +146,8 @@ DBS_API void dbs_christree_del(struct dbs_christree_node *node)
 		return;
 	}
 
+	free(node->prev);
+
 	free(node->next);
 
 	free(node);
@@ -758,31 +760,43 @@ DBS_API void dbs_christree_rmv(struct dbs_christree *tree,
 
 	n_ptr = tree->root;
 	for(i = 0; i < tree->layer_num; i++) {
-		printf("%c\n", str[i]);
+		printf("%d (%d): %c\n", i, n_ptr->next_used, str[i]);
 
 		if(!(n_next = dbs_christree_get_next(n_ptr, str[i]))) {
 			return;
 		}
 
 		n_ptr = n_next;
+
+		printf("%d\n", n_ptr->next_used);
 	}
 
 	printf("Middle\n");
 
-	for(i = tree->layer_num - 1; i >= 0; i--) {
-		if(!(n_prev = dbs_christree_get_prev(n_ptr, str[i]))) {
-			printf("WASSSS BRUDIII %d / %c / %02x\n", i, str[i], str[i]);
-			return;
+	for(i = tree->layer_num - 1; i >= 0 && n_ptr; i--) {
+		
+		printf("%d\n", n_ptr->next_used);
+
+		if(i > 0) {
+			if(!(n_prev = dbs_christree_get_prev(n_ptr, str[i - 1]))) {
+				printf("WASSSS BRUDIII %d / %c / %02x\n", i, str[i], str[i]);
+				return;
+			}
+		}
+		else {
+			n_prev = NULL;
 		}
 
-		if(n_ptr->next_used > 1 || n_ptr->prev_used < 1) {
+		printf("%d\n", n_ptr->next_used);
+
+		if(n_ptr->next_used >= 1 || n_ptr->prev_used < 1) {
 			printf("Leck mich\n");
 			return;
 		}
 
 		dbs_christree_unlink_node(tree, n_ptr, n_prev);
 
-		printf("Removed %c / %02x\n", str[i], str[i]);
+		printf("Removed %d: %c / %02x\n", i, str[i], str[i]);
 
 		dbs_christree_del(n_ptr);
 
@@ -911,8 +925,10 @@ DBS_API int dbs_christree_dump_layers(struct dbs_christree *tree)
 
 		n_ptr = tree->layer[i].node;
 		while(n_ptr) {
-			printf("%02x (%c, %d)", n_ptr->dif, 
-					(char)n_ptr->dif, n_ptr->next_used);
+			printf("%02x (%c, %d, %d)", n_ptr->dif, 
+					(char)n_ptr->dif,
+					n_ptr->next_used,
+					n_ptr->prev_used);
 
 			if(n_ptr->after)
 				printf(", ");
