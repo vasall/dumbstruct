@@ -23,22 +23,9 @@ DBS_API struct dbs_christree *dbs_christree_init(int lim)
 	 * Allocate memory for the root node and initialize it.
 	 * Also preallocate memory for the first few few branch nodes.
 	 */
-	if(!(tree->root = malloc(sizeof(struct dbs_christree_node))))
+
+	if(!(tree->root = dbs_christree_new(-1, 0)))
 		goto err_free_tree;
-
-	tree->root->layer = -1;
-	tree->root->prev = NULL;
-	tree->root->next_used = 0;
-	tree->root->next_alloc = DBS_CHRISTREE_NEXT_MIN;
-	tree->root->before = NULL;
-	tree->root->after = NULL;
-
-	tmp = tree->root->next_alloc * sizeof(struct dbs_christree_node *);
-	if(!(tree->root->next = malloc(tmp)))
-		goto err_free_root;
-	
-	for(i = 0; i < tree->root->next_alloc; i++)
-		tree->root->next[i] = NULL;
 
 	/*
 	 * Create and initialize the layers.
@@ -46,7 +33,7 @@ DBS_API struct dbs_christree *dbs_christree_init(int lim)
 	tree->layer_num = lim;
 	tmp = tree->layer_num * sizeof(struct dbs_christree_layer);
 	if(!(tree->layer = malloc(tmp)))
-		goto err_free_root_next;
+		goto err_del_root;
 
 	for(i = 0; i < tree->layer_num; i++) {
 		tree->layer[i].layer_num = i;
@@ -57,11 +44,8 @@ DBS_API struct dbs_christree *dbs_christree_init(int lim)
 
 	return tree;
 
-err_free_root_next:
-	free(tree->root->next);
-
-err_free_root:
-	free(tree->root);
+err_del_root:
+	dbs_christree_del(tree->root);
 
 err_free_tree:
 	free(tree);
@@ -92,8 +76,7 @@ DBS_API void dbs_christree_close(struct dbs_christree *tree)
 	/*
 	 * Delete the root node.
 	 */
-	free(tree->root->next);
-	free(tree->root);
+	dbs_christree_del(tree->root);
 
 	/*
 	 * Free the table struct.
@@ -102,8 +85,7 @@ DBS_API void dbs_christree_close(struct dbs_christree *tree)
 }
 
 
-DBS_API struct dbs_christree_node *dbs_christree_new(struct dbs_christree_node *prev,
-		int layer, char dif)
+DBS_API struct dbs_christree_node *dbs_christree_new(int layer, char dif)
 {
 	struct dbs_christree_node *node;
 	int tmp;
@@ -115,34 +97,42 @@ DBS_API struct dbs_christree_node *dbs_christree_new(struct dbs_christree_node *
 	if(!(node = malloc(sizeof(struct dbs_christree_node))))
 		goto err_return;
 
-	/*
-	 * Link the previous element.
-	 */
-	node->prev = prev;
 	node->layer = layer;
 	node->dif = dif;
 	node->data = NULL;
 
 	node->before = NULL;
 	node->after = NULL;
-		
+
+	node->prev_used = 0;
+	node->prev_alloc = DBS_CHRISTREE_PREV_MIN;
+
 	node->next_used = 0;
 	node->next_alloc = DBS_CHRISTREE_NEXT_MIN;
 
 	/*
-	 * Preallocate memory for the next nodes and reset the pointers.
+	 * Preallocate memory for the prev and next nodes and reset the pointers.
 	 */
+	tmp = node->prev_alloc * sizeof(struct dbs_christree_node *);
+	if(!(node->prev = malloc(tmp)))
+		goto err_free_node;
+
 	tmp = node->next_alloc * sizeof(struct dbs_christree_node *);
 	if(!(node->next = malloc(tmp)))
 		goto err_free_node;
+
+	for(i = 0; i < node->prev_alloc; i++)
+		node->prev[i] = NULL;
 
 	for(i = 0; i < node->next_alloc; i++)
 		node->next[i] = NULL;
 
 	return node;
 
+
 err_free_node:
 	free(node);
+
 err_return:
 	ALARM(ALARM_ERR, "Failed to create stress tree node");
 	return NULL;
@@ -162,8 +152,132 @@ DBS_API void dbs_christree_del(struct dbs_christree_node *node)
 }
 
 
-DBS_API struct dbs_christree_node *dbs_christree_get_next(struct dbs_christree_node *n,
-		char dif)
+DBS_API int dbs_christree_get_layer(struct dbs_christree *tree,
+		int layer, char dif, struct dbs_christree_node **lst, int lim)
+{
+	struct dbs_christree_node *n_ptr;
+	int c = 0;
+
+	if(!tree || !lst || lim < 1) {
+		ALARM(ALARM_WARN, "layer or lst undefined or lim invalid");
+		return -1;
+	}
+
+	n_ptr = tree->layer[layer].node;
+	while(n_ptr) {
+		if(n_ptr->dif == dif) {
+			lst[c] = n_ptr;
+			c++;
+		}
+
+		if(c >= lim)
+			break;
+
+		n_ptr = n_ptr->after;
+	}
+
+	return c;
+}
+
+
+DBS_API int dbs_christree_add_prev(struct dbs_christree_node *node,
+		struct dbs_christree_node *prev)
+{
+	struct dbs_christree_node **p;
+	int alloc;
+	int tmp;
+	int i;
+	int j;
+
+	if(!node || !prev) {
+		ALARM(ALARM_WARN, "node or prev undefined");
+		return -1;
+	}
+
+	/*
+	 * Check if there's space left in the prev list, and if not, allocate
+	 * more.
+	 */
+	if(node->prev_used + 1 >= node->prev_alloc) {
+		alloc = node->prev_alloc * 2;
+		tmp = alloc * sizeof(struct dbs_christree_node *);
+		if(!(p = realloc(node->prev, tmp)))
+			goto err_return;
+
+		for(i = node->prev_alloc; i < alloc; i++)
+			p[i] = NULL;
+
+		node->prev = p;
+		node->prev_alloc = alloc;
+	}
+
+	for(i = 0; i < node->prev_alloc; i++) {
+		/*
+		 * If there's a free slot, use it.
+		 */
+		if(node->prev[i] == NULL) {
+			node->prev[i] = prev;
+			node->prev_used++;
+			return 0;
+		}
+
+		/*
+		 * If the next element is bigger than the one we want to insert,
+		 * then move all the following ones a slot back and overwrite
+		 * the slot with the given node.
+		 */
+		if(node->prev[i]->dif > prev->dif) {
+			tmp = node->prev_used - i - 1;
+			for(j = i; j < node->prev_used; j++)
+				node->prev[j + 1] = node->prev[j];
+
+			node->prev[i] = prev;
+			node->prev_used++;
+			return 0;
+		}
+	}
+
+err_return:
+	ALARM(ALARM_ERR, "Failed to link prev element");
+	return -1;
+}
+
+
+DBS_API void dbs_christree_rmv_prev(struct dbs_christree_node *node,
+		struct dbs_christree_node *prev)
+{
+	int i;
+	int j;
+	int tmp;
+
+	if(!node || !prev) {
+		ALARM(ALARM_WARN, "node or prev undefined");
+		return;
+	}
+
+	for(i = 0; i < node->prev_used; i++) {
+		if(node->prev[i]->dif == prev->dif) {
+			/*
+			 * Move all pointers on slot up.
+			 */
+			for(j = i + 1; j < node->prev_used; j++)
+				node->prev[j - 1] = node->prev[j];
+
+
+			node->prev[node->prev_used - 1] = NULL;
+
+			/*
+			 * Decrement number of pointers.
+			 */
+			node->prev_used--;
+			return;
+		}
+	}
+}
+
+
+DBS_API struct dbs_christree_node *dbs_christree_get_prev(struct dbs_christree_node *n,
+		unsigned char dif)
 {
 	int i;
 
@@ -172,34 +286,12 @@ DBS_API struct dbs_christree_node *dbs_christree_get_next(struct dbs_christree_n
 		return NULL;
 	}
 
-	for(i = 0; i < n->next_used; i++) {
-		if(!n->next[i])
+	for(i = 0; i < n->prev_used; i++) {
+		if(!n->prev[i])
 			continue;
 
-		if(n->next[i]->dif == dif)
-			return n->next[i];
-	}
-
-	return NULL;
-}
-
-
-DBS_API struct dbs_christree_node *dbs_christree_get_layer(struct dbs_christree *tree,
-		int layer, char dif)
-{
-	struct dbs_christree_node *n_ptr;
-
-	if(!tree) {
-		ALARM(ALARM_WARN, "layer undefined");
-		return NULL;
-	}
-	
-	n_ptr = tree->layer[layer].node;
-	while(n_ptr) {
-		if(n_ptr->dif == dif)
-			return n_ptr;
-
-		n_ptr = n_ptr->after;
+		if(n->prev[i]->dif == dif)
+			return n->prev[i];
 	}
 
 	return NULL;
@@ -230,6 +322,9 @@ DBS_API int dbs_christree_add_next(struct dbs_christree_node *node,
 		if(!(p = realloc(node->next, tmp)))
 			goto err_return;
 
+		printf("New alloc %d/Used %d/Alloc %d\n", 
+				alloc, node->next_used, node->next_alloc);
+
 		for(i = node->next_alloc; i < alloc; i++)
 			p[i] = NULL;
 
@@ -242,6 +337,7 @@ DBS_API int dbs_christree_add_next(struct dbs_christree_node *node,
 		 * If there's a free slot, use it.
 		 */
 		if(node->next[i] == NULL) {
+
 			node->next[i] = next;
 			node->next_used++;
 			return 0;
@@ -253,12 +349,26 @@ DBS_API int dbs_christree_add_next(struct dbs_christree_node *node,
 		 * the slot with the given node.
 		 */
 		if(node->next[i]->dif > next->dif) {
-			tmp = node->next_used - i - 1;
+			printf("Before (%d): ", node->next_used);
 			for(j = i; j < node->next_used; j++)
-				node->next[i + 1] = node->next[i];
+				printf("%p, ", node->next[j]);
+			printf("\n");
+
+			for(j = node->next_used; j > i ; j--)
+				node->next[j] = node->next[j - 1];
+
+			printf("Middle (%d): ", node->next_used);
+			for(j = i; j < node->next_used; j++)
+				printf("%p, ", node->next[j]);
+			printf("\n");
 
 			node->next[i] = next;
 			node->next_used++;
+
+			printf("After (%d): ", node->next_used);
+			for(j = i; j < node->next_used; j++)
+				printf("%p, ", node->next[j]);
+			printf("\n");
 			return 0;
 		}
 	}
@@ -286,9 +396,10 @@ DBS_API void dbs_christree_rmv_next(struct dbs_christree_node *node,
 			/*
 			 * Move all pointers on slot up.
 			 */
-			tmp = node->next_used - i - 1;
 			for(j = i + 1; j < node->next_used; j++)
 				node->next[j - 1] = node->next[j];
+
+			node->next[node->next_used - 1] = NULL;
 
 			/*
 			 * Decrement number of pointers.
@@ -298,6 +409,29 @@ DBS_API void dbs_christree_rmv_next(struct dbs_christree_node *node,
 		}
 	}
 }
+
+
+DBS_API struct dbs_christree_node *dbs_christree_get_next(struct dbs_christree_node *n,
+		unsigned char dif)
+{
+	int i;
+
+	if(!n) {
+		ALARM(ALARM_WARN, "n undefined");
+		return NULL;
+	}
+
+	for(i = 0; i < n->next_used; i++) {
+		if(!n->next[i])
+			continue;
+
+		if(n->next[i]->dif == dif)
+			return n->next[i];
+	}
+
+	return NULL;
+}
+
 
 DBS_API int dbs_christree_link_layer(struct dbs_christree *tree,
 		struct dbs_christree_node *node)
@@ -312,6 +446,9 @@ DBS_API int dbs_christree_link_layer(struct dbs_christree *tree,
 	}
 
 	layer = &tree->layer[node->layer];
+
+	node->layer_id = layer->count;
+	layer->count++;
 
 	/*
 	 * Check if there are nodes cross linked on the layer.
@@ -374,7 +511,7 @@ DBS_API void dbs_christree_unlink_layer(struct dbs_christree *tree,
 
 	if(!tree || !node) {
 		ALARM(ALARM_WARN, "tree or node undefined");
-		
+
 #if DBS_DEBUG
 		printf("tree or node undefined\n");
 #endif
@@ -396,7 +533,7 @@ DBS_API void dbs_christree_unlink_layer(struct dbs_christree *tree,
 				(void *)n_ptr, n_ptr->dif);
 #endif
 
-		if(n_ptr->dif == node->dif) {
+		if(n_ptr->layer_id == node->layer_id) {
 #if DBS_DEBUG
 			printf("Found node.\n");
 #endif
@@ -452,8 +589,55 @@ DBS_API void dbs_christree_unlink_layer(struct dbs_christree *tree,
 }
 
 
+DBS_API int dbs_christree_link_verti(struct dbs_christree_node *n,
+		struct dbs_christree_node *prev)
+{
+	if(!n || !prev) {
+		ALARM(ALARM_WARN, "n or prev undefined");
+		return -1;
+	}
+
+	/*
+	 * Add n to the next list of the previous node.
+	 */
+	if(dbs_christree_add_next(prev, n) < 0)
+		goto err_return;
+
+	/*
+	 * Add prev to the previous list of n.
+	 */
+	if(dbs_christree_add_prev(n, prev) < 0)
+		goto err_rmv_next;
+
+	return 0;
+
+err_rmv_next:
+	dbs_christree_rmv_next(prev, n);
+
+err_return:
+	return -1;
+}
+
+
+DBS_API int dbs_christree_unlink_verti(struct dbs_christree_node *n,
+		struct dbs_christree_node *prev)
+{
+	if(!n || !prev) {
+		ALARM(ALARM_WARN, "n or prev undefined");
+		return -1;
+	}
+
+	dbs_christree_rmv_next(prev, n);
+
+	dbs_christree_rmv_prev(n, prev);
+
+	return 0;
+}
+
+
 DBS_API int dbs_christree_link_node(struct dbs_christree *tree,
-		struct dbs_christree_node *node)
+		struct dbs_christree_node *node,
+		struct dbs_christree_node *prev)
 {
 	if(!tree || !node) {
 		ALARM(ALARM_WARN, "tree or node undefined");
@@ -462,21 +646,23 @@ DBS_API int dbs_christree_link_node(struct dbs_christree *tree,
 
 
 	/*
-	 * Link to the previous element.
+	 * Link node vertically.
 	 */
-	if(dbs_christree_add_next(node->prev, node) < 0)
+	if(dbs_christree_link_verti(node, prev) < 0)
 		goto err_return;
+
 
 	/*
 	 * Add the node to the layer list.
 	 */
 	if(dbs_christree_link_layer(tree, node) < 0)
-		goto err_rmv_next;
+		goto err_unlink_verti;
 
 	return 0;
 
-err_rmv_next:
-	dbs_christree_rmv_next(node->prev, node);
+err_unlink_verti:
+	dbs_christree_unlink_verti(node, prev);
+
 
 err_return:
 	ALARM(ALARM_ERR, "Failed to link node");
@@ -485,7 +671,8 @@ err_return:
 
 
 DBS_API void dbs_christree_unlink_node(struct dbs_christree *tree, 
-		struct dbs_christree_node *node)
+		struct dbs_christree_node *node,
+		struct dbs_christree_node *prev)
 {
 	if(!tree || !node) {
 		ALARM(ALARM_WARN, "tree or node undefined");
@@ -498,9 +685,9 @@ DBS_API void dbs_christree_unlink_node(struct dbs_christree *tree,
 	dbs_christree_unlink_layer(tree, node);
 
 	/*
-	 * Unlink from the previous element.
+	 * Unlink the node vertically.
 	 */
-	dbs_christree_rmv_next(node->prev, node);
+	dbs_christree_unlink_verti(node, prev);
 }
 
 
@@ -518,14 +705,22 @@ DBS_API int dbs_christree_add(struct dbs_christree *tree,
 
 	n_ptr = tree->root; 
 	for(i = 0; i < tree->layer_num; i++) {
+		/*
+		 * Check if the required node is already linked below.
+		 */
 		if(!(node = dbs_christree_get_next(n_ptr, str[i]))) {
-			if(!(node = dbs_christree_new(n_ptr, i, str[i]))) {
-				goto err_return;
-			}
 
-			if(dbs_christree_link_node(tree, node) < 0)
+			/*
+			 * Otherwise create a new node and link it.
+			 */
+
+			if(!(node = dbs_christree_new(i, str[i])))
+				goto err_return;
+
+			if(dbs_christree_link_node(tree, node, n_ptr) < 0)
 				goto err_del_node;
 		}
+
 
 		n_ptr = node;
 	}
@@ -559,22 +754,35 @@ DBS_API void dbs_christree_rmv(struct dbs_christree *tree,
 		return;
 	}
 
+	printf("Lel %d\n", tree->layer_num);
+
 	n_ptr = tree->root;
 	for(i = 0; i < tree->layer_num; i++) {
-		if(!(n_next = dbs_christree_get_next(n_ptr, str[i])))
+		printf("%c\n", str[i]);
+
+		if(!(n_next = dbs_christree_get_next(n_ptr, str[i]))) {
 			return;
+		}
 
 		n_ptr = n_next;
 	}
 
-	for(i = tree->layer_num; i >= 0; i--) {
-		n_prev = n_ptr->prev;
+	printf("Middle\n");
 
-		if(n_ptr->next_used > 1 || n_prev == NULL) {
+	for(i = tree->layer_num - 1; i >= 0; i--) {
+		if(!(n_prev = dbs_christree_get_prev(n_ptr, str[i]))) {
+			printf("WASSSS BRUDIII %d / %c / %02x\n", i, str[i], str[i]);
 			return;
 		}
 
-		dbs_christree_unlink_node(tree, n_ptr);
+		if(n_ptr->next_used > 1 || n_ptr->prev_used < 1) {
+			printf("Leck mich\n");
+			return;
+		}
+
+		dbs_christree_unlink_node(tree, n_ptr, n_prev);
+
+		printf("Removed %c / %02x\n", str[i], str[i]);
 
 		dbs_christree_del(n_ptr);
 
@@ -609,6 +817,10 @@ DBS_API int dbs_christree_sel(struct dbs_christree *tree,
 	struct dbs_christree_node *n_ptr;
 	struct dbs_christree_sel_pass pass;
 	int i;
+	int j;
+
+	struct dbs_christree_node *lst[64];
+	int num;
 
 	if(!tree || !mask || lim < 1) {
 		ALARM(ALARM_WARN, "tree or mask undefined");
@@ -618,22 +830,29 @@ DBS_API int dbs_christree_sel(struct dbs_christree *tree,
 	/*
 	 * Go through the mask to find the branches to collect the nodes from.
 	 */
-	if(!(n_ptr = dbs_christree_get_layer(tree, mask->off, mask->data[0])))
+	if((num = dbs_christree_get_layer(tree, mask->off, mask->data[0], lst, 64)) < 0)
 		return 0;
 
-	for(i = 1; i < mask->len; i++) {
-		if(!(n_ptr = dbs_christree_get_next(n_ptr, mask->data[i])))
-			return 0;
-	}
 
 	/*
-	 * Recursivly collect all datanection from branches below this node.
+	 * Set the passing argument for searching recursivly.
 	 */
 	pass.c = 0;
 	pass.lim = lim;
 	pass.data = data;
 
-	dbs_christree_sel_hlf(n_ptr, &pass);
+
+	for(i = 0; i < num; i++) {
+		for(j = 1; j < mask->len; j++) {
+			if(!(lst[i] = dbs_christree_get_next(lst[i], mask->data[j])))
+				return 0;
+		}
+
+		/*
+		 * Recursivly collect all data connections from branches below this node.
+		 */
+		dbs_christree_sel_hlf(lst[i], &pass);
+	}
 
 	return pass.c;
 
@@ -642,14 +861,18 @@ DBS_API int dbs_christree_sel(struct dbs_christree *tree,
 DBS_API int dbs_christree_dump_rec(struct dbs_christree_node *n)
 {
 	int i;
-	int l = n->layer + 1;
+	int l;
 
+
+	printf("%p\n", n);
+
+	l = n->layer + 1;
 	for(i = 0; i < l; i++) {
 		printf("  ");
 	}
 
-	printf("- %d (%d): \n", l, n->next_used);
-	printf("%02x\n", n->dif);
+	printf("- %d (%d): ", l, n->next_used);
+	printf("%02x (%c)\n", n->dif, (char)n->dif);
 
 
 	for(i = 0; i < n->next_used; i++) {
@@ -688,7 +911,8 @@ DBS_API int dbs_christree_dump_layers(struct dbs_christree *tree)
 
 		n_ptr = tree->layer[i].node;
 		while(n_ptr) {
-			printf("%02x", n_ptr->dif);
+			printf("%02x (%c, %d)", n_ptr->dif, 
+					(char)n_ptr->dif, n_ptr->next_used);
 
 			if(n_ptr->after)
 				printf(", ");
