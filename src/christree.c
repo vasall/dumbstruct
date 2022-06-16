@@ -49,8 +49,10 @@ DBS_API struct dbs_christree *dbs_christree_init(int lim)
 		goto err_free_root_next;
 
 	for(i = 0; i < tree->layer_num; i++) {
+		tree->layer[i].layer_num = i;
 		tree->layer[i].node = NULL;
 		tree->layer[i].node_num = 0;
+		tree->layer[i].count = 0;
 	}
 
 	return tree;
@@ -211,6 +213,7 @@ DBS_API int dbs_christree_add_next(struct dbs_christree_node *node,
 	int alloc;
 	int tmp;
 	int i;
+	int j;
 
 	if(!node || !next) {
 		ALARM(ALARM_WARN, "node or next undefined");
@@ -250,9 +253,9 @@ DBS_API int dbs_christree_add_next(struct dbs_christree_node *node,
 		 * the slot with the given node.
 		 */
 		if(node->next[i]->dif > next->dif) {
-			tmp = (node->next_used - i);
-			tmp *= sizeof(struct dbs_christree_node *);
-			memmove(&node->next[i + 1], &node->next[i], tmp);
+			tmp = node->next_used - i - 1;
+			for(j = i; j < node->next_used; j++)
+				node->next[i + 1] = node->next[i];
 
 			node->next[i] = next;
 			node->next_used++;
@@ -270,6 +273,7 @@ DBS_API void dbs_christree_rmv_next(struct dbs_christree_node *node,
 		struct dbs_christree_node *next)
 {
 	int i;
+	int j;
 	int tmp;
 
 	if(!node || !next) {
@@ -283,8 +287,8 @@ DBS_API void dbs_christree_rmv_next(struct dbs_christree_node *node,
 			 * Move all pointers on slot up.
 			 */
 			tmp = node->next_used - i - 1;
-			tmp *= sizeof(struct dbs_christree_node *);
-			memmove(&node->next[i], &node->next[i + 1], tmp);
+			for(j = i + 1; j < node->next_used; j++)
+				node->next[j - 1] = node->next[j];
 
 			/*
 			 * Decrement number of pointers.
@@ -370,25 +374,61 @@ DBS_API void dbs_christree_unlink_layer(struct dbs_christree *tree,
 
 	if(!tree || !node) {
 		ALARM(ALARM_WARN, "tree or node undefined");
+		
+#if DBS_DEBUG
+		printf("tree or node undefined\n");
+#endif
+
 		return;
 	}
 
 	layer = &tree->layer[node->layer];
 	n_ptr = layer->node;
 
+#if DBS_DEBUG
+	printf("Unlink node with dif %02x from layer %d\n",
+			node->dif, layer->layer_num);
+#endif
+
 	while(n_ptr) {
+#if DBS_DEBUG
+		printf("Try node(%p) with dif %02x\n",
+				(void *)n_ptr, n_ptr->dif);
+#endif
+
 		if(n_ptr->dif == node->dif) {
+#if DBS_DEBUG
+			printf("Found node.\n");
+#endif
+
 			/*
 			 * Relink nodes.
 			 */
 			if(n_ptr->after) {
+#if DBS_DEBUG
+				printf("Link after(%p) to before(%p)\n",
+						(void *)n_ptr->after,
+						(void *)n_ptr->before);
+
+				printf("After Before %p\n",
+						(void *)n_ptr->after->before);
+#endif
 				n_ptr->after->before = n_ptr->before;
 			}
 
 			if(n_ptr->before == NULL) {
+#if DBS_DEBUG
+				printf("Set after(%p) to root\n",
+						(void *)n_ptr->after);
+#endif
 				layer->node = n_ptr->after;
 			}
 			else {
+#if DBS_DEBUG
+				printf("Link before(%p) to after(%p)\n",
+						(void *)n_ptr->before,
+						(void *)n_ptr->after);
+#endif
 				n_ptr->before->after = n_ptr->after;
 			}
 
@@ -396,11 +436,19 @@ DBS_API void dbs_christree_unlink_layer(struct dbs_christree *tree,
 			 * Decrement number of nodes in the layer.
 			 */
 			layer->node_num--;
+#if DBS_DEBUG
+			printf("Reduce number of node in layer to %d\n",
+					layer->node_num);
+#endif
 			return;
 		}
 
 		n_ptr = n_ptr->after;
 	}
+
+#if DBS_DEBUG
+	printf("Node not found in layer\n");
+#endif
 }
 
 
@@ -620,6 +668,36 @@ DBS_API int dbs_christree_dump(struct dbs_christree *tree)
 	}
 
 	dbs_christree_dump_rec(tree->root);
+
+	return 0;
+}
+
+
+DBS_API int dbs_christree_dump_layers(struct dbs_christree *tree)
+{
+	int i;
+	struct dbs_christree_node *n_ptr;
+
+	if(!tree) {
+		ALARM(ALARM_WARN, "tree undefined");
+		return -1;
+	}
+
+	for(i = 0; i < tree->layer_num; i++) {
+		printf("Layer %d(%d): ", i, tree->layer[i].node_num);
+
+		n_ptr = tree->layer[i].node;
+		while(n_ptr) {
+			printf("%02x", n_ptr->dif);
+
+			if(n_ptr->after)
+				printf(", ");
+
+			n_ptr = n_ptr->after;
+		}
+
+		printf("\n");
+	}
 
 	return 0;
 }

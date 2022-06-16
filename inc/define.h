@@ -3,5 +3,9 @@
 
 #define DBS_API                extern
 
+/*
+ * This flag enables debug mode which will print all data into the console.
+ */
+#define DBS_DEBUG              1
 
 #endif /* _DBS_DEFINE_H */

@@ -31,6 +31,11 @@ struct dbs_christree_node {
 	int                          layer;
 
 	/*
+	 * The unique layer identifier.
+	 */
+	int                          layer_id;
+
+	/*
 	 * The differenciating byte.
 	 */
 	char                         dif;
@@ -43,8 +48,12 @@ struct dbs_christree_node {
 
 
 struct dbs_christree_layer {
+	int                          layer_num;
+
 	struct dbs_christree_node    *node;
 	int                          node_num;
+
+	int                          count;
 };
 
 
@@ -52,12 +61,12 @@ struct dbs_christree {
 	/*
 	 * The root nodes for each branch of the connection address tree. 
 	 */
-	struct dbs_christree_node      *root;
+	struct dbs_christree_node    *root;
 
 	/*
 	 * Each layer is a cross linked like a linked list. 
 	 */
-	struct dbs_christree_layer       *layer;
+	struct dbs_christree_layer   *layer;
 	int                          layer_num;
 };
 
@@ -266,5 +275,15 @@ DBS_API int dbs_christree_dump_rec(struct dbs_christree_node *n);
  * Returns: 0 on success or -1 if an error occurred
  */
 DBS_API int dbs_christree_dump(struct dbs_christree *tree);
+
+
+/*
+ * Print all layers of the christree in the console.
+ *
+ * @tree: Pointer to the tree struct
+ *
+ * Returns: 0 on success or -1 if an error occurred
+ */
+DBS_API int dbs_christree_dump_layers(struct dbs_christree *tree);
 
 #endif /* _DBS_CHRISTREE_H */
