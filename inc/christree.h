@@ -15,9 +15,7 @@ struct dbs_christree_node {
 	/*
 	 * A pointer to both the nodes above and the nodes below. 
 	 */
-	struct dbs_christree_node    **prev;
-	int                          prev_used;
-	int                          prev_alloc;
+	struct dbs_christree_node    *prev;
 
 	struct dbs_christree_node    **next;
 	int                          next_used;
@@ -138,7 +136,7 @@ DBS_API void dbs_christree_del(struct dbs_christree_node *node);
 
 
 /*
- * Add an entry to the prev list of a node.
+ * Set the specified node as the previous one to the node.
  *
  * @node: Pointer to the node with the prev list
  * @next: Pointer to the node entry to add to the prev list
@@ -150,27 +148,11 @@ DBS_API int dbs_christree_add_prev(struct dbs_christree_node *node,
 
 
 /*
- * Remove an entry from the prev list of a node.
+ * Remove the node currently set as the previous node.
  *
- * @node: Pointer to the node with the prev list
- * @next: Pointer to the node entry to remove from the prev list
+ * @node: Pointer to the node to reset the prev pointer for
  */
-DBS_API void dbs_christree_rmv_prev(struct dbs_christree_node *node,
-		struct dbs_christree_node *prev);
-
-
-/*
- * Go through the prev list of the given node and search for a node with the
- * specified diff character.
- *
- * @n: Pointer to the node to start the prev list
- * @dif: The dif character the node must have
- *
- * Returns: Either a pointer to the node if found or NULL if no node was found
- *          or an error occurred
- */
-DBS_API struct dbs_christree_node *dbs_christree_get_prev(struct dbs_christree_node *n,
-		unsigned char dif);
+DBS_API void dbs_christree_rmv_prev(struct dbs_christree_node *node);
 
 
 /*
