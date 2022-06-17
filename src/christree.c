@@ -395,61 +395,25 @@ DBS_API void dbs_christree_unlink_layer(struct dbs_christree *tree,
 
 	if(!tree || !node) {
 		ALARM(ALARM_WARN, "tree or node undefined");
-
-#if DBS_DEBUG
-		printf("tree or node undefined\n");
-#endif
-
 		return;
 	}
 
 	layer = &tree->layer[node->layer];
 	n_ptr = layer->node;
 
-#if DBS_DEBUG
-	printf("Unlink node with dif %02x from layer %d\n",
-			node->dif, layer->layer_num);
-#endif
-
 	while(n_ptr) {
-#if DBS_DEBUG
-		printf("Try node(%p) with dif %02x\n",
-				(void *)n_ptr, n_ptr->dif);
-#endif
-
 		if(n_ptr->layer_id == node->layer_id) {
-#if DBS_DEBUG
-			printf("Found node.\n");
-#endif
-
 			/*
 			 * Relink nodes.
 			 */
 			if(n_ptr->after) {
-#if DBS_DEBUG
-				printf("Link after(%p) to before(%p)\n",
-						(void *)n_ptr->after,
-						(void *)n_ptr->before);
-
-				printf("After Before %p\n",
-						(void *)n_ptr->after->before);
-#endif
 				n_ptr->after->before = n_ptr->before;
 			}
 
 			if(n_ptr->before == NULL) {
-#if DBS_DEBUG
-				printf("Set after(%p) to root\n",
-						(void *)n_ptr->after);
-#endif
 				layer->node = n_ptr->after;
 			}
 			else {
-#if DBS_DEBUG
-				printf("Link before(%p) to after(%p)\n",
-						(void *)n_ptr->before,
-						(void *)n_ptr->after);
-#endif
 				n_ptr->before->after = n_ptr->after;
 			}
 
@@ -457,19 +421,12 @@ DBS_API void dbs_christree_unlink_layer(struct dbs_christree *tree,
 			 * Decrement number of nodes in the layer.
 			 */
 			layer->node_num--;
-#if DBS_DEBUG
-			printf("Reduce number of node in layer to %d\n",
-					layer->node_num);
-#endif
+
 			return;
 		}
 
 		n_ptr = n_ptr->after;
 	}
-
-#if DBS_DEBUG
-	printf("Node not found in layer\n");
-#endif
 }
 
 
