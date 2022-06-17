@@ -15,17 +15,17 @@ struct dbs_christree_node {
 	/*
 	 * A pointer to both the nodes above and the nodes below. 
 	 */
-	struct dbs_christree_node    *prev;
+	struct dbs_christree_node    *v_prev;
 
-	struct dbs_christree_node    **next;
-	int                          next_used;
-	int                          next_alloc;
+	struct dbs_christree_node    **v_next;
+	int                          v_next_used;
+	int                          v_next_alloc;
 	
 	/*
 	 * The cross pointers for the layer.
 	 */
-	struct dbs_christree_node    *before;
-	struct dbs_christree_node    *after;
+	struct dbs_christree_node    *h_v_prev;
+	struct dbs_christree_node    *h_v_next;
 
 	/*
 	 * The layernumber the node is on. 
@@ -136,58 +136,58 @@ DBS_API void dbs_christree_del(struct dbs_christree_node *node);
 
 
 /*
- * Set the specified node as the previous one to the node.
+ * Set the specified node as the v_previous one to the node.
  *
- * @node: Pointer to the node with the prev list
- * @next: Pointer to the node entry to add to the prev list
- *
- * Returns: 0 on success or -1 if an error occurred
- */
-DBS_API int dbs_christree_add_prev(struct dbs_christree_node *node,
-		struct dbs_christree_node *prev);
-
-
-/*
- * Remove the node currently set as the previous node.
- *
- * @node: Pointer to the node to reset the prev pointer for
- */
-DBS_API void dbs_christree_rmv_prev(struct dbs_christree_node *node);
-
-
-/*
- * Add an entry to the next list of a node.
- *
- * @node: Pointer to the node with the next list
- * @next: Pointer to the node entry to add to the next list
+ * @node: Pointer to the node with the v_prev list
+ * @v_next: Pointer to the node entry to add to the v_prev list
  *
  * Returns: 0 on success or -1 if an error occurred
  */
-DBS_API int dbs_christree_add_next(struct dbs_christree_node *node,
-		struct dbs_christree_node *next);
+DBS_API int dbs_christree_add_v_prev(struct dbs_christree_node *node,
+		struct dbs_christree_node *v_prev);
 
 
 /*
- * Remove an entry from the next list of a node.
+ * Remove the node currently set as the v_previous node.
  *
- * @node: Pointer to the node with the next list
- * @next: Pointer to the node entry to remove from the next list
+ * @node: Pointer to the node to reset the v_prev pointer for
  */
-DBS_API void dbs_christree_rmv_next(struct dbs_christree_node *node,
-		struct dbs_christree_node *next);
+DBS_API void dbs_christree_rmv_v_prev(struct dbs_christree_node *node);
 
 
 /*
- * Go through the next list of the given node and search for a node with the
+ * Add an entry to the v_next list of a node.
+ *
+ * @node: Pointer to the node with the v_next list
+ * @v_next: Pointer to the node entry to add to the v_next list
+ *
+ * Returns: 0 on success or -1 if an error occurred
+ */
+DBS_API int dbs_christree_add_v_next(struct dbs_christree_node *node,
+		struct dbs_christree_node *v_next);
+
+
+/*
+ * Remove an entry from the v_next list of a node.
+ *
+ * @node: Pointer to the node with the v_next list
+ * @v_next: Pointer to the node entry to remove from the v_next list
+ */
+DBS_API void dbs_christree_rmv_v_next(struct dbs_christree_node *node,
+		struct dbs_christree_node *v_next);
+
+
+/*
+ * Go through the v_next list of the given node and search for a node with the
  * specified diff character.
  *
- * @n: Pointer to the node to start the next list
+ * @n: Pointer to the node to start the v_next list
  * @dif: The dif character the node must have
  *
  * Returns: Either a pointer to the node if found or NULL if no node was found
  *          or an error occurred
  */
-DBS_API struct dbs_christree_node *dbs_christree_get_next(struct dbs_christree_node *n,
+DBS_API struct dbs_christree_node *dbs_christree_get_v_next(struct dbs_christree_node *n,
 		unsigned char dif);
 
 
@@ -199,7 +199,7 @@ DBS_API struct dbs_christree_node *dbs_christree_get_next(struct dbs_christree_n
  *
  * Returns: 0 on success or -1 if an error occurred 
  */
-DBS_API int dbs_christree_link_layer(struct dbs_christree *tree,
+DBS_API int dbs_christree_link_hori(struct dbs_christree *tree,
 		struct dbs_christree_node *node);
 
 
@@ -209,32 +209,32 @@ DBS_API int dbs_christree_link_layer(struct dbs_christree *tree,
  * @tree: Pointer to the tree struct
  * @id: The layer id of the node
  */
-DBS_API void dbs_christree_unlink_layer(struct dbs_christree *tree,
+DBS_API void dbs_christree_unlink_hori(struct dbs_christree *tree,
 		struct dbs_christree_node *node);
 
 
 /*
  * Link two nodes vertically.
  *
- * @n: Pointer to the node to link to the previous one
- * @prev: Pointer to the previous node
+ * @n: Pointer to the node to link to the v_previous one
+ * @v_prev: Pointer to the v_previous node
  *
  * Returns: 0 on success or -1 if an error occurred
  */
 DBS_API int dbs_christree_link_verti(struct dbs_christree_node *n,
-		struct dbs_christree_node *prev);
+		struct dbs_christree_node *v_prev);
 
 
 /*
  * Unlink two nodes vertically.
  *
- * @n: Pointer to the node to unlink from the previous one
- * @prev: Pointer to the previous node
+ * @n: Pointer to the node to unlink from the v_previous one
+ * @v_prev: Pointer to the v_previous node
  *
  * Returns: 0 on success or -1 if an error occurred
  */
 DBS_API int dbs_christree_unlink_verti(struct dbs_christree_node *n,
-		struct dbs_christree_node *prev);
+		struct dbs_christree_node *v_prev);
 
 /*
  * This function will link a new node into the tree and the layer lists.
@@ -245,25 +245,25 @@ DBS_API int dbs_christree_unlink_verti(struct dbs_christree_node *n,
  *
  * @tree: Pointer to the tree struct
  * @node: Pointer to the new node to link
- * @prev: Pointer to the node above
+ * @v_prev: Pointer to the node above
  *
  * Returns: 0 on success or -1 if an error occurred
  */
 DBS_API int dbs_christree_link_node(struct dbs_christree *tree,
 		struct dbs_christree_node *node,
-		struct dbs_christree_node *prev);
+		struct dbs_christree_node *v_prev);
 
 
 /*
- * Unlink a node both from the next list from the node above and layer list.
+ * Unlink a node both from the v_next list from the node above and layer list.
  *
  * @tree: Pointer to the tree struct
  * @node: Pointer to the node to unlink
- * @prev: Pointer to the node above
+ * @v_prev: Pointer to the node above
  */
 DBS_API void dbs_christree_unlink_node(struct dbs_christree *tree, 
 		struct dbs_christree_node *node,
-		struct dbs_christree_node *prev);
+		struct dbs_christree_node *v_prev);
 
 
 /*
