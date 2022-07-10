@@ -7,11 +7,11 @@
 #include <string.h>
 
 
-DBS_API struct dbs_christree *dbs_christree_init(int lim)
+DBS_API struct dbs_christree *dbs_christree_init(s32 lim)
 {
 	struct dbs_christree *tree;
-	int tmp;
-	int i;
+	s32 tmp;
+	s32 i;
 
 	/*
 	 * Allocate memory for the tree.
@@ -85,11 +85,11 @@ DBS_API void dbs_christree_close(struct dbs_christree *tree)
 }
 
 
-DBS_API struct dbs_christree_node *dbs_christree_new(int layer, char dif)
+DBS_API struct dbs_christree_node *dbs_christree_new(s32 layer, u8 dif)
 {
 	struct dbs_christree_node *node;
-	int tmp;
-	int i;
+	s32 tmp;
+	s32 i;
 
 	/*
 	 * Allocate memory for the new node.
@@ -147,11 +147,11 @@ DBS_API void dbs_christree_del(struct dbs_christree_node *node)
 }
 
 
-DBS_API int dbs_christree_get_layer(struct dbs_christree *tree,
-		int layer, char dif, struct dbs_christree_node **lst, int lim)
+DBS_API s32 dbs_christree_get_layer(struct dbs_christree *tree,
+		s32 layer, u8 dif, struct dbs_christree_node **lst, s32 lim)
 {
 	struct dbs_christree_node *n_ptr;
-	int c = 0;
+	s32 c = 0;
 
 	if(!tree || !lst || lim < 1) {
 		ALARM(ALARM_WARN, "layer or lst undefined or lim invalid");
@@ -175,7 +175,7 @@ DBS_API int dbs_christree_get_layer(struct dbs_christree *tree,
 }
 
 
-DBS_API int dbs_christree_add_v_prev(struct dbs_christree_node *node,
+DBS_API s32 dbs_christree_add_v_prev(struct dbs_christree_node *node,
 		struct dbs_christree_node *v_prev)
 {
 	if(!node || !v_prev) {
@@ -200,14 +200,14 @@ DBS_API void dbs_christree_rmv_v_prev(struct dbs_christree_node *node)
 }
 
 
-DBS_API int dbs_christree_add_v_next(struct dbs_christree_node *node,
+DBS_API s32 dbs_christree_add_v_next(struct dbs_christree_node *node,
 		struct dbs_christree_node *v_next)
 {
 	struct dbs_christree_node **p;
-	int alloc;
-	int tmp;
-	int i;
-	int j;
+	s32 alloc;
+	s32 tmp;
+	s32 i;
+	s32 j;
 
 	if(!node || !v_next) {
 		ALARM(ALARM_WARN, "node or v_next undefined");
@@ -267,8 +267,8 @@ err_return:
 DBS_API void dbs_christree_rmv_v_next(struct dbs_christree_node *node,
 		struct dbs_christree_node *v_next)
 {
-	int i;
-	int j;
+	s32 i;
+	s32 j;
 
 	if(!node || !v_next) {
 		ALARM(ALARM_WARN, "node or v_next undefined");
@@ -296,9 +296,9 @@ DBS_API void dbs_christree_rmv_v_next(struct dbs_christree_node *node,
 
 
 DBS_API struct dbs_christree_node *dbs_christree_get_v_next(struct dbs_christree_node *n,
-		unsigned char dif)
+		u8 dif)
 {
-	int i;
+	s32 i;
 
 	if(!n) {
 		ALARM(ALARM_WARN, "n undefined");
@@ -317,7 +317,7 @@ DBS_API struct dbs_christree_node *dbs_christree_get_v_next(struct dbs_christree
 }
 
 
-DBS_API int dbs_christree_link_hori(struct dbs_christree *tree,
+DBS_API s32 dbs_christree_link_hori(struct dbs_christree *tree,
 		struct dbs_christree_node *node)
 {
 	struct dbs_christree_layer *layer;
@@ -430,7 +430,7 @@ DBS_API void dbs_christree_unlink_hori(struct dbs_christree *tree,
 }
 
 
-DBS_API int dbs_christree_link_verti(struct dbs_christree_node *n,
+DBS_API s32 dbs_christree_link_verti(struct dbs_christree_node *n,
 		struct dbs_christree_node *v_prev)
 {
 	if(!n || !v_prev) {
@@ -460,7 +460,7 @@ err_return:
 }
 
 
-DBS_API int dbs_christree_unlink_verti(struct dbs_christree_node *n,
+DBS_API s32 dbs_christree_unlink_verti(struct dbs_christree_node *n,
 		struct dbs_christree_node *v_prev)
 {
 	if(!n || !v_prev) {
@@ -476,7 +476,7 @@ DBS_API int dbs_christree_unlink_verti(struct dbs_christree_node *n,
 }
 
 
-DBS_API int dbs_christree_link_node(struct dbs_christree *tree,
+DBS_API s32 dbs_christree_link_node(struct dbs_christree *tree,
 		struct dbs_christree_node *node,
 		struct dbs_christree_node *v_prev)
 {
@@ -532,10 +532,10 @@ DBS_API void dbs_christree_unlink_node(struct dbs_christree *tree,
 }
 
 
-DBS_API int dbs_christree_add(struct dbs_christree *tree,
-		unsigned char *str, void *data)
+DBS_API s32 dbs_christree_add(struct dbs_christree *tree,
+		u8 *str, void *data)
 {
-	int i;
+	s32 i;
 	struct dbs_christree_node *node;
 	struct dbs_christree_node *n_ptr;
 
@@ -587,12 +587,12 @@ err_return:
 
 
 DBS_API void dbs_christree_rmv(struct dbs_christree *tree,
-		unsigned char *str)
+		u8 *str)
 {
 	struct dbs_christree_node *n_ptr;
 	struct dbs_christree_node *n_v_next;
 	struct dbs_christree_node *n_v_prev;
-	int i;
+	s32 i;
 
 	if(!tree || !str) {
 		ALARM(ALARM_WARN, "tree or str undefined");
@@ -626,7 +626,7 @@ DBS_API void dbs_christree_rmv(struct dbs_christree *tree,
 DBS_API void dbs_christree_sel_hlf(struct dbs_christree_node *nc, void *d)
 {
 	struct dbs_christree_sel_pass *pass = d;
-	int i;
+	s32 i;
 
 	if(nc->data != NULL) {
 		pass->data[pass->c] = nc->data;
@@ -643,15 +643,15 @@ DBS_API void dbs_christree_sel_hlf(struct dbs_christree_node *nc, void *d)
 
 
 
-DBS_API int dbs_christree_sel(struct dbs_christree *tree,
-		struct dbs_chrismask *mask, void **data, int lim)
+DBS_API s32 dbs_christree_sel(struct dbs_christree *tree,
+		struct dbs_chrismask *mask, void **data, s32 lim)
 {
 	struct dbs_christree_sel_pass pass;
-	int i;
-	int j;
+	s32 i;
+	s32 j;
 
 	struct dbs_christree_node *lst[64];
-	int num;
+	s32 num;
 
 	if(!tree || !mask || lim < 1) {
 		ALARM(ALARM_WARN, "tree or mask undefined");
@@ -692,10 +692,10 @@ DBS_API int dbs_christree_sel(struct dbs_christree *tree,
 
 }
 
-DBS_API int dbs_christree_dump_rec(struct dbs_christree_node *n)
+DBS_API s32 dbs_christree_dump_rec(struct dbs_christree_node *n)
 {
-	int i;
-	int l;
+	s32 i;
+	s32 l;
 
 	l = n->layer + 1;
 	for(i = 0; i < l; i++) {
@@ -714,7 +714,7 @@ DBS_API int dbs_christree_dump_rec(struct dbs_christree_node *n)
 }
 
 
-DBS_API int dbs_christree_dump(struct dbs_christree *tree)
+DBS_API s32 dbs_christree_dump(struct dbs_christree *tree)
 {
 	if(!tree) {
 		ALARM(ALARM_WARN, "tree undefined");
@@ -727,9 +727,9 @@ DBS_API int dbs_christree_dump(struct dbs_christree *tree)
 }
 
 
-DBS_API int dbs_christree_dump_layers(struct dbs_christree *tree)
+DBS_API s32 dbs_christree_dump_layers(struct dbs_christree *tree)
 {
-	int i;
+	s32 i;
 	struct dbs_christree_node *n_ptr;
 
 	if(!tree) {
