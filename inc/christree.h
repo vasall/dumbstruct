@@ -144,7 +144,7 @@ DBS_API void dbs_christree_del(struct dbs_christree_node *node);
  *
  * Returns: 0 on success or -1 if an error occurred
  */
-DBS_API s32 dbs_christree_add_v_prev(struct dbs_christree_node *node,
+DBS_API s8 dbs_christree_add_v_prev(struct dbs_christree_node *node,
 		struct dbs_christree_node *v_prev);
 
 
@@ -164,7 +164,7 @@ DBS_API void dbs_christree_rmv_v_prev(struct dbs_christree_node *node);
  *
  * Returns: 0 on success or -1 if an error occurred
  */
-DBS_API s32 dbs_christree_add_v_next(struct dbs_christree_node *node,
+DBS_API s8 dbs_christree_add_v_next(struct dbs_christree_node *node,
 		struct dbs_christree_node *v_next);
 
 
@@ -200,7 +200,7 @@ DBS_API struct dbs_christree_node *dbs_christree_get_v_next(struct dbs_christree
  *
  * Returns: 0 on success or -1 if an error occurred 
  */
-DBS_API s32 dbs_christree_link_hori(struct dbs_christree *tree,
+DBS_API s8 dbs_christree_link_hori(struct dbs_christree *tree,
 		struct dbs_christree_node *node);
 
 
@@ -222,7 +222,7 @@ DBS_API void dbs_christree_unlink_hori(struct dbs_christree *tree,
  *
  * Returns: 0 on success or -1 if an error occurred
  */
-DBS_API s32 dbs_christree_link_verti(struct dbs_christree_node *n,
+DBS_API s8 dbs_christree_link_verti(struct dbs_christree_node *n,
 		struct dbs_christree_node *v_prev);
 
 
@@ -234,7 +234,7 @@ DBS_API s32 dbs_christree_link_verti(struct dbs_christree_node *n,
  *
  * Returns: 0 on success or -1 if an error occurred
  */
-DBS_API s32 dbs_christree_unlink_verti(struct dbs_christree_node *n,
+DBS_API s8 dbs_christree_unlink_verti(struct dbs_christree_node *n,
 		struct dbs_christree_node *v_prev);
 
 /*
@@ -250,7 +250,7 @@ DBS_API s32 dbs_christree_unlink_verti(struct dbs_christree_node *n,
  *
  * Returns: 0 on success or -1 if an error occurred
  */
-DBS_API int dbs_christree_link_node(struct dbs_christree *tree,
+DBS_API s8 dbs_christree_link_node(struct dbs_christree *tree,
 		struct dbs_christree_node *node,
 		struct dbs_christree_node *v_prev);
 
@@ -276,7 +276,7 @@ DBS_API void dbs_christree_unlink_node(struct dbs_christree *tree,
  *
  * Returns: 0 on success or -1 if an error occurred
  */
-DBS_API s32 dbs_christree_add(struct dbs_christree *tree,
+DBS_API s8 dbs_christree_add(struct dbs_christree *tree,
 		u8 *str, void *data);
 
 
@@ -323,7 +323,7 @@ DBS_API s32 dbs_christree_dump_rec(struct dbs_christree_node *n);
  *
  * Returns: 0 on success or -1 if an error occurred
  */
-DBS_API s32 dbs_christree_dump(struct dbs_christree *tree);
+DBS_API s8 dbs_christree_dump(struct dbs_christree *tree);
 
 
 /*
@@ -333,6 +333,6 @@ DBS_API s32 dbs_christree_dump(struct dbs_christree *tree);
  *
  * Returns: 0 on success or -1 if an error occurred
  */
-DBS_API s32 dbs_christree_dump_layers(struct dbs_christree *tree);
+DBS_API s8 dbs_christree_dump_layers(struct dbs_christree *tree);
 
 #endif /* _DBS_CHRISTREE_H */

@@ -175,7 +175,7 @@ DBS_API s32 dbs_christree_get_layer(struct dbs_christree *tree,
 }
 
 
-DBS_API s32 dbs_christree_add_v_prev(struct dbs_christree_node *node,
+DBS_API s8 dbs_christree_add_v_prev(struct dbs_christree_node *node,
 		struct dbs_christree_node *v_prev)
 {
 	if(!node || !v_prev) {
@@ -200,7 +200,7 @@ DBS_API void dbs_christree_rmv_v_prev(struct dbs_christree_node *node)
 }
 
 
-DBS_API s32 dbs_christree_add_v_next(struct dbs_christree_node *node,
+DBS_API s8 dbs_christree_add_v_next(struct dbs_christree_node *node,
 		struct dbs_christree_node *v_next)
 {
 	struct dbs_christree_node **p;
@@ -317,7 +317,7 @@ DBS_API struct dbs_christree_node *dbs_christree_get_v_next(struct dbs_christree
 }
 
 
-DBS_API s32 dbs_christree_link_hori(struct dbs_christree *tree,
+DBS_API s8 dbs_christree_link_hori(struct dbs_christree *tree,
 		struct dbs_christree_node *node)
 {
 	struct dbs_christree_layer *layer;
@@ -430,7 +430,7 @@ DBS_API void dbs_christree_unlink_hori(struct dbs_christree *tree,
 }
 
 
-DBS_API s32 dbs_christree_link_verti(struct dbs_christree_node *n,
+DBS_API s8 dbs_christree_link_verti(struct dbs_christree_node *n,
 		struct dbs_christree_node *v_prev)
 {
 	if(!n || !v_prev) {
@@ -460,7 +460,7 @@ err_return:
 }
 
 
-DBS_API s32 dbs_christree_unlink_verti(struct dbs_christree_node *n,
+DBS_API s8 dbs_christree_unlink_verti(struct dbs_christree_node *n,
 		struct dbs_christree_node *v_prev)
 {
 	if(!n || !v_prev) {
@@ -476,7 +476,7 @@ DBS_API s32 dbs_christree_unlink_verti(struct dbs_christree_node *n,
 }
 
 
-DBS_API s32 dbs_christree_link_node(struct dbs_christree *tree,
+DBS_API s8 dbs_christree_link_node(struct dbs_christree *tree,
 		struct dbs_christree_node *node,
 		struct dbs_christree_node *v_prev)
 {
@@ -532,7 +532,7 @@ DBS_API void dbs_christree_unlink_node(struct dbs_christree *tree,
 }
 
 
-DBS_API s32 dbs_christree_add(struct dbs_christree *tree,
+DBS_API s8 dbs_christree_add(struct dbs_christree *tree,
 		u8 *str, void *data)
 {
 	s32 i;
@@ -714,7 +714,7 @@ DBS_API s32 dbs_christree_dump_rec(struct dbs_christree_node *n)
 }
 
 
-DBS_API s32 dbs_christree_dump(struct dbs_christree *tree)
+DBS_API s8 dbs_christree_dump(struct dbs_christree *tree)
 {
 	if(!tree) {
 		ALARM(ALARM_WARN, "tree undefined");
@@ -727,7 +727,7 @@ DBS_API s32 dbs_christree_dump(struct dbs_christree *tree)
 }
 
 
-DBS_API s32 dbs_christree_dump_layers(struct dbs_christree *tree)
+DBS_API s8 dbs_christree_dump_layers(struct dbs_christree *tree)
 {
 	s32 i;
 	struct dbs_christree_node *n_ptr;
