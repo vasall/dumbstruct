@@ -2,7 +2,7 @@
 #define _DBS_UTILS_H
 
 #include "define.h"
-
+#include "imports.h"
 
 /*
  * Hash a buffer.
@@ -12,6 +12,6 @@
  *
  * Returns: The hash value
  */
-DBS_API unsigned long dbs_hash(unsigned char *buf, int len);
+DBS_API u64 dbs_hash(u8 *buf, s32 len);
 
 #endif

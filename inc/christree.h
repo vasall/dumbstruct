@@ -2,6 +2,7 @@
 #define _DBS_CHRISTREE_H
 
 #include "define.h"
+#include "imports.h"
 
 /*
  * 
@@ -111,7 +112,7 @@ DBS_API void dbs_christree_close(struct dbs_christree *tree);
  * Returns: The number of nodes written to the list or -1 if an error occurred
  */
 DBS_API s32 dbs_christree_get_layer(struct dbs_christree *tree,
-		s32 layer, s8 dif, struct dbs_christree_node **lst, s32 lim);
+		s32 layer, u8 dif, struct dbs_christree_node **lst, s32 lim);
 
 
 /*
