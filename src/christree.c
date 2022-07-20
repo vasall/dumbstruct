@@ -16,12 +16,12 @@ DBS_API struct dbs_christree *dbs_christree_init(s32 lim)
 	/*
 	 * Allocate memory for the tree.
 	 */
-	if(!(tree = malloc(sizeof(struct dbs_christree))))
+	if(!(tree = smalloc(sizeof(struct dbs_christree))))
 		goto err_return;
 
 	/*
 	 * Allocate memory for the root node and initialize it.
-	 * Also preallocate memory for the first few few branch nodes.
+	 * Also psreallocate memory for the first few few branch nodes.
 	 */
 
 	if(!(tree->root = dbs_christree_new(-1, 0)))
@@ -32,7 +32,7 @@ DBS_API struct dbs_christree *dbs_christree_init(s32 lim)
 	 */
 	tree->layer_num = lim;
 	tmp = tree->layer_num * sizeof(struct dbs_christree_layer);
-	if(!(tree->layer = malloc(tmp)))
+	if(!(tree->layer = smalloc(tmp)))
 		goto err_del_root;
 
 	for(i = 0; i < tree->layer_num; i++) {
@@ -48,7 +48,7 @@ err_del_root:
 	dbs_christree_del(tree->root);
 
 err_free_tree:
-	free(tree);
+	sfree(tree);
 
 err_return:
 	ALARM(ALARM_ERR, "Failed to create stress tree");
@@ -71,7 +71,7 @@ DBS_API void dbs_christree_close(struct dbs_christree *tree)
 	/*
 	 * Free the layers list.
 	 */
-	free(tree->layer);
+	sfree(tree->layer);
 
 	/*
 	 * Delete the root node.
@@ -81,7 +81,7 @@ DBS_API void dbs_christree_close(struct dbs_christree *tree)
 	/*
 	 * Free the table struct.
 	 */
-	free(tree);
+	sfree(tree);
 }
 
 
@@ -94,7 +94,7 @@ DBS_API struct dbs_christree_node *dbs_christree_new(s32 layer, u8 dif)
 	/*
 	 * Allocate memory for the new node.
 	 */
-	if(!(node = malloc(sizeof(struct dbs_christree_node))))
+	if(!(node = smalloc(sizeof(struct dbs_christree_node))))
 		goto err_return;
 
 	node->layer = layer;
@@ -114,7 +114,7 @@ DBS_API struct dbs_christree_node *dbs_christree_new(s32 layer, u8 dif)
 	 */
 
 	tmp = node->v_next_alloc * sizeof(struct dbs_christree_node *);
-	if(!(node->v_next = malloc(tmp)))
+	if(!(node->v_next = smalloc(tmp)))
 		goto err_free_node;
 
 	for(i = 0; i < node->v_next_alloc; i++)
@@ -124,7 +124,7 @@ DBS_API struct dbs_christree_node *dbs_christree_new(s32 layer, u8 dif)
 
 
 err_free_node:
-	free(node);
+	sfree(node);
 
 err_return:
 	ALARM(ALARM_ERR, "Failed to create stress tree node");
@@ -139,11 +139,11 @@ DBS_API void dbs_christree_del(struct dbs_christree_node *node)
 		return;
 	}
 
-	free(node->v_prev);
+	sfree(node->v_prev);
 
-	free(node->v_next);
+	sfree(node->v_next);
 
-	free(node);
+	sfree(node);
 }
 
 
@@ -221,7 +221,7 @@ DBS_API s8 dbs_christree_add_v_next(struct dbs_christree_node *node,
 	if(node->v_next_used + 1 >= node->v_next_alloc) {
 		alloc = node->v_next_alloc * 2;
 		tmp = alloc * sizeof(struct dbs_christree_node *);
-		if(!(p = realloc(node->v_next, tmp)))
+		if(!(p = srealloc(node->v_next, tmp)))
 			goto err_return;
 
 		for(i = node->v_next_alloc; i < alloc; i++)
